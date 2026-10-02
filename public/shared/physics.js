@@ -43,24 +43,32 @@ export const RULES = {
 };
 
 // Platforms are one-way (you can jump up through them) unless solid.
+// Tiers are 120 px apart. A jump lifts the feet jumpV^2 / (2 * gravity) ~= 153 px,
+// so every tier is reachable from the one below with margin to spare — keep any
+// new tier within ~130 px of its neighbour or it becomes dead space.
 export const PLATFORMS = [
   { x: 0, y: 680, w: 1280, h: 40, solid: true }, // floor
-  { x: 160, y: 520, w: 220, h: 16 },
-  { x: 900, y: 520, w: 220, h: 16 },
-  { x: 490, y: 400, w: 300, h: 16 },
-  { x: 110, y: 280, w: 210, h: 16 },
-  { x: 960, y: 280, w: 210, h: 16 },
-  { x: 540, y: 170, w: 200, h: 16 },
+  { x: 110, y: 560, w: 210, h: 16 },
+  { x: 960, y: 560, w: 210, h: 16 },
+  { x: 20, y: 440, w: 140, h: 16 },
+  { x: 430, y: 440, w: 190, h: 16 },
+  { x: 660, y: 440, w: 190, h: 16 },
+  { x: 1120, y: 440, w: 140, h: 16 },
+  { x: 190, y: 320, w: 230, h: 16 },
+  { x: 860, y: 320, w: 230, h: 16 },
+  { x: 540, y: 200, w: 200, h: 16 },
 ];
 
 // Feet positions for spawning players.
 export const SPAWNS = [
-  { x: 90, y: 680 }, { x: 1190, y: 680 }, { x: 270, y: 520 }, { x: 1010, y: 520 },
-  { x: 215, y: 280 }, { x: 1065, y: 280 }, { x: 640, y: 400 }, { x: 640, y: 680 },
+  { x: 90, y: 680 }, { x: 1190, y: 680 }, { x: 640, y: 680 },
+  { x: 215, y: 560 }, { x: 1065, y: 560 },
+  { x: 300, y: 320 }, { x: 975, y: 320 },
+  { x: 640, y: 200 },
 ];
 
 export const BALL_SPAWNS = [
-  { x: 640, y: 120 }, { x: 270, y: 470 }, { x: 1010, y: 470 }, { x: 640, y: 620 },
+  { x: 640, y: 150 }, { x: 215, y: 510 }, { x: 1065, y: 510 }, { x: 640, y: 620 },
 ];
 
 export const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
