@@ -1,0 +1,36 @@
+# Production-style stack. `docker compose up` also merges docker-compose.override.yml
+# (live reload for development). For a plain run: docker compose -f docker-compose.yml up --build
+services:
+  app:
+    build: .
+    init: true
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgres://dodgeball:dodgeball@db:5432/dodgeball
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: dodgeball
+      POSTGRES_PASSWORD: dodgeball
+      POSTGRES_DB: dodgeball
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dodgeball -d dodgeball"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+    # Uncomment to connect from a local SQL client (5433 avoids clashing with a local Postgres)
+    # ports:
+    #   - "5433:5432"
+
+volumes:
+  pgdata:

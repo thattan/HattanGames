@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dodgeball</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%23D2352B'/><path d='M4 14 Q16 20 28 14' stroke='%237a1d17' stroke-width='2' fill='none'/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Graduate&family=Barlow:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <section id="home" class="screen home">
+    <header class="banner">
+      <h1 class="title">Dodgeball</h1>
+      <p class="tagline">Throw, catch, and bank it off the wall. Up to 8 players a game.</p>
+    </header>
+
+    <div class="home-grid" id="home-grid">
+      <div class="panel">
+        <label for="name">Your name</label>
+        <input id="name" maxlength="16" autocomplete="nickname" placeholder="Sam" spellcheck="false">
+
+        <div id="invite-block" hidden>
+          <p class="invite-note">You're invited to game <strong id="invite-code"></strong>.</p>
+          <button id="join-invited" class="btn primary" type="button">Join game</button>
+          <a class="text-link" href="/">Start your own game instead</a>
+        </div>
+
+        <div id="host-block">
+          <button id="create" class="btn primary" type="button">Create game</button>
+          <form id="join-form" class="join-row">
+            <label class="visually-hidden" for="join-code">Game code</label>
+            <input id="join-code" maxlength="8" placeholder="Game code" autocomplete="off" spellcheck="false">
+            <button class="btn" type="submit">Join</button>
+          </form>
+        </div>
+
+        <p id="home-error" class="error" role="alert"></p>
+      </div>
+
+      <aside id="leaderboard" class="scoreboard" hidden>
+        <h2>Most hits, all time</h2>
+        <ol id="leaderboard-list"></ol>
+      </aside>
+    </div>
+  </section>
+
+  <section id="lobby" class="screen lobby" hidden>
+    <div class="panel lobby-panel">
+      <p class="muted">Game code</p>
+      <div id="lobby-code" class="code"></div>
+      <div class="invite">
+        <label class="visually-hidden" for="invite-url">Invite link</label>
+        <input id="invite-url" readonly>
+        <button id="copy-link" class="btn" type="button">Copy invite link</button>
+      </div>
+
+      <h2>Players <span id="player-count" class="muted"></span></h2>
+      <ul id="player-list" class="players"></ul>
+
+      <button id="start" class="btn primary" type="button" hidden>Start game</button>
+      <p id="waiting" class="muted" hidden>Waiting for the host to start the game.</p>
+    </div>
+
+    <div class="panel how">
+      <h2>How to play</h2>
+      <dl class="keys">
+        <dt>Move</dt><dd><kbd>A</kbd> <kbd>D</kbd> or <kbd>←</kbd> <kbd>→</kbd></dd>
+        <dt>Jump</dt><dd><kbd>W</kbd>, <kbd>↑</kbd> or <kbd>Space</kbd></dd>
+        <dt>Drop down</dt><dd><kbd>S</kbd> or <kbd>↓</kbd></dd>
+        <dt>Aim</dt><dd>Mouse</dd>
+        <dt>Throw</dt><dd>Left click or <kbd>J</kbd></dd>
+        <dt>Catch</dt><dd>Right click or <kbd>K</kbd></dd>
+      </dl>
+      <p>Hit someone to score a point and send them out for two seconds. Catch a live ball to score and knock the thrower out instead. Time your catch right as the ball arrives, and keep your hands free: you can't catch while holding a ball.</p>
+      <p>A throw dies when it touches the floor or a platform. Bank shots off the walls stay live.</p>
+    </div>
+  </section>
+
+  <section id="game" class="screen game" hidden>
+    <div class="stage" id="stage">
+      <canvas id="canvas" aria-label="Dodgeball arena"></canvas>
+      <div class="hud">
+        <ol id="scores" class="scores"></ol>
+        <div id="clock" class="clock">2:00</div>
+        <div id="ping" class="ping"></div>
+      </div>
+      <div id="results" class="results" hidden>
+        <div class="results-card">
+          <h2 id="results-title">Final score</h2>
+          <ol id="results-list"></ol>
+          <p id="results-note" class="muted">Back to the lobby in a few seconds.</p>
+          <button id="play-again" class="btn primary" type="button" hidden>Play again</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script type="module" src="/js/main.js"></script>
+</body>
+</html>

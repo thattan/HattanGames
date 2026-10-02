@@ -1,0 +1,11 @@
+# Development overrides, merged automatically by `docker compose up`.
+# Edits to server/ restart the server; edits to public/ show up on browser refresh.
+services:
+  app:
+    command: ["node", "--watch", "server/index.js"]
+    environment:
+      NODE_ENV: development
+    volumes:
+      - ./server:/app/server
+      - ./public:/app/public
+      - ./db:/app/db
