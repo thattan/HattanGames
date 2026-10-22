@@ -5,7 +5,7 @@ services:
     build: .
     init: true
     ports:
-      - "3000:3000"
+      - "3023:3000"
     environment:
       PORT: 3000
       DATABASE_URL: postgres://dodgeball:dodgeball@db:5432/dodgeball
