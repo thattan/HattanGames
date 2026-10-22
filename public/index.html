@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gym Class</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%23D2352B'/><path d='M4 14 Q16 20 28 14' stroke='%237a1d17' stroke-width='2' fill='none'/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Graduate&family=Barlow:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main class="screen">
+    <header class="banner">
+      <h1 class="title">Gym Class</h1>
+      <p class="tagline">Pick a game. Grab your friends. No download, no account.</p>
+    </header>
+
+    <ul class="games" id="games">
+      <!-- Rendered from /api/games; the markup below is the no-JS fallback. -->
+      <li>
+        <a class="panel game-card" href="/dodgeball" style="--accent: #c7362d">
+          <h2>Dodgeball</h2>
+          <p class="game-tagline">Throw, catch, and bank it off the wall.</p>
+          <p class="game-blurb">Up to 8 players, two-minute rounds. Hit someone to score; catch their throw to score and knock them out.</p>
+          <span class="game-meta"><span class="badge">2-8 players</span><span class="play">Play</span></span>
+        </a>
+      </li>
+    </ul>
+
+    <p id="games-error" class="error on-wall" role="alert"></p>
+  </main>
+
+  <script type="module" src="/js/landing.js"></script>
+</body>
+</html>

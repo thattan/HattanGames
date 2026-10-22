@@ -1,11 +1,12 @@
-import { Net } from './net.js';
+import { Net } from '/js/net.js';
+import { $, el, chip, toast } from '/js/dom.js';
+import { loadName, saveName } from '/js/player.js';
 import { Input } from './input.js';
 import { Renderer } from './render.js';
 import { Interpolator } from './interp.js';
 
-const $ = (id) => document.getElementById(id);
 const screens = { home: $('home'), lobby: $('lobby'), game: $('game') };
-const NAME_KEY = 'dodgeball:name';
+const BASE = '/dodgeball';
 
 const state = {
   code: null,
@@ -24,17 +25,11 @@ const interp = new Interpolator();
 // ---------- helpers ----------
 
 function show(name) {
-  for (const [key, el] of Object.entries(screens)) el.hidden = key !== name;
+  for (const [key, node] of Object.entries(screens)) node.hidden = key !== name;
   input.enabled = name === 'game';
   if (name === 'game') renderer.resize();
 }
 
-function loadName() {
-  try { return localStorage.getItem(NAME_KEY) || ''; } catch { return ''; }
-}
-function saveName(name) {
-  try { localStorage.setItem(NAME_KEY, name); } catch { /* storage unavailable */ }
-}
 function currentName() {
   const name = $('name').value.trim();
   saveName(name);
@@ -42,33 +37,12 @@ function currentName() {
 }
 
 function codeFromPath() {
-  const m = location.pathname.match(/^\/play\/([A-Za-z0-9]{4,8})\/?$/);
+  const m = location.pathname.match(/^\/dodgeball\/play\/([A-Za-z0-9]{4,8})\/?$/);
   return m ? m[1].toUpperCase() : null;
-}
-
-let toastTimer;
-function toast(message) {
-  const el = $('toast');
-  el.textContent = message;
-  el.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
 }
 
 function homeError(message) {
   $('home-error').textContent = message;
-}
-
-function el(tag, props = {}, children = []) {
-  const node = Object.assign(document.createElement(tag), props);
-  for (const c of children) node.append(c);
-  return node;
-}
-
-function chip(color) {
-  const c = el('span', { className: 'chip' });
-  c.style.background = color;
-  return c;
 }
 
 // ---------- home ----------
@@ -105,16 +79,27 @@ async function loadLeaderboard() {
 
 async function roomExists(code) {
   const res = await fetch(`/api/rooms/${encodeURIComponent(code)}`);
-  return res.ok;
+  if (!res.ok) return false;
+  // Codes are shared across games, so a dodgeball code might belong to hangman.
+  const info = await res.json().catch(() => null);
+  if (info?.game && info.game !== 'dodgeball') {
+    location.href = `/${info.game}/play/${code}`;
+    return false;
+  }
+  return true;
 }
 
 async function createGame() {
   homeError('');
   try {
-    const res = await fetch('/api/rooms', { method: 'POST' });
+    const res = await fetch('/api/rooms', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ game: 'dodgeball' }),
+    });
     if (!res.ok) throw new Error();
     const { code } = await res.json();
-    history.pushState({}, '', `/play/${code}`);
+    history.pushState({}, '', `${BASE}/play/${code}`);
     connect(code);
   } catch {
     homeError('Could not create a game. Check that the server is running, then try again.');
@@ -129,7 +114,7 @@ async function joinGame(code) {
     homeError(`Game ${code} doesn't exist or has closed. Check the code, or create a new game.`);
     return;
   }
-  if (codeFromPath() !== code) history.pushState({}, '', `/play/${code}`);
+  if (codeFromPath() !== code) history.pushState({}, '', `${BASE}/play/${code}`);
   connect(code);
 }
 
@@ -204,7 +189,7 @@ function applyRoster(msg) {
 function renderLobby() {
   const isHost = state.myId === state.hostId;
   $('lobby-code').textContent = state.code;
-  $('invite-url').value = `${location.origin}/play/${state.code}`;
+  $('invite-url').value = `${location.origin}${BASE}/play/${state.code}`;
   $('player-count').textContent = `(${state.roster.length}/8)`;
   $('start').hidden = !isHost;
   $('waiting').hidden = isHost;
@@ -334,7 +319,7 @@ async function init() {
   setInviteMode(code);
   if (code && !(await roomExists(code).catch(() => false))) {
     setInviteMode(null);
-    history.replaceState({}, '', '/');
+    history.replaceState({}, '', BASE);
     homeError(`Game ${code} doesn't exist or has closed. Create a new game to play.`);
   }
   loadLeaderboard();

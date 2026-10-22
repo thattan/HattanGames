@@ -1,8 +1,8 @@
 {
-  "name": "dodgeball",
+  "name": "gym-class",
   "version": "0.1.0",
   "private": true,
-  "description": "Multiplayer 2D platformer dodgeball over WebSockets",
+  "description": "Browser party games: a game picker plus multiplayer dodgeball over WebSockets",
   "type": "module",
   "scripts": {
     "start": "node server/index.js",

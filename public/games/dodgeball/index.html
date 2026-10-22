@@ -9,9 +9,11 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Graduate&family=Barlow:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/games/dodgeball/style.css">
 </head>
 <body>
   <section id="home" class="screen home">
+    <nav class="home-nav"><a class="back-link" href="/">&larr; All games</a></nav>
     <header class="banner">
       <h1 class="title">Dodgeball</h1>
       <p class="tagline">Throw, catch, and bank it off the wall. Up to 8 players a game.</p>
@@ -25,7 +27,7 @@
         <div id="invite-block" hidden>
           <p class="invite-note">You're invited to game <strong id="invite-code"></strong>.</p>
           <button id="join-invited" class="btn primary" type="button">Join game</button>
-          <a class="text-link" href="/">Start your own game instead</a>
+          <a class="text-link" href="/dodgeball">Start your own game instead</a>
         </div>
 
         <div id="host-block">
@@ -100,6 +102,6 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-  <script type="module" src="/js/main.js"></script>
+  <script type="module" src="/games/dodgeball/js/main.js"></script>
 </body>
 </html>

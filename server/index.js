@@ -4,14 +4,20 @@ import { fileURLToPath } from 'node:url';
 import express from 'express';
 import { WebSocketServer } from 'ws';
 import { RoomManager } from './rooms.js';
+import { DodgeballRoom } from './dodgeball/room.js';
+import { HangmanRoom } from './hangman/room.js';
 import { initDb, dbEnabled, getLeaderboard, closeDb } from './db.js';
-import { TICK_RATE, SNAPSHOT_RATE } from '../public/shared/physics.js';
+import { GAMES } from './games.js';
+import { TICK_RATE, SNAPSHOT_RATE } from '../public/games/dodgeball/shared/physics.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 const PORT = Number(process.env.PORT) || 3000;
 
-const rooms = new RoomManager();
+const rooms = new RoomManager({
+  [DodgeballRoom.gameId]: DodgeballRoom,
+  [HangmanRoom.gameId]: HangmanRoom,
+});
 const app = express();
 
 app.use(express.json({ limit: '10kb' }));
@@ -22,14 +28,20 @@ app.get('/health', (req, res) => {
 });
 
 app.post('/api/rooms', (req, res) => {
-  const room = rooms.create();
-  res.status(201).json({ code: room.code });
+  const game = String(req.body?.game ?? 'dodgeball');
+  if (!rooms.supports(game)) return res.status(400).json({ error: `Unknown game "${game}"` });
+  const room = rooms.create(game);
+  res.status(201).json({ code: room.code, game });
 });
 
 app.get('/api/rooms/:code', (req, res) => {
   const room = rooms.get(req.params.code);
   if (!room) return res.status(404).json({ error: 'Game not found' });
   res.json(room.summary());
+});
+
+app.get('/api/games', (req, res) => {
+  res.json({ games: GAMES });
 });
 
 app.get('/api/leaderboard', async (req, res) => {
@@ -42,8 +54,16 @@ app.get('/api/leaderboard', async (req, res) => {
   }
 });
 
-// Invite links like /play/K7XQ2 load the same single-page client.
-app.get('/play/:code', (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'index.html')));
+// Each game's client lives in public/games/<id>/ and gets a short URL of its own.
+// Invite links like /dodgeball/play/K7XQ2 load the same single-page client.
+for (const id of Object.keys(rooms.roomClasses)) {
+  const page = (req, res) => res.sendFile(path.join(PUBLIC_DIR, 'games', id, 'index.html'));
+  app.get(`/${id}`, page);
+  app.get(`/${id}/play/:code`, page);
+}
+
+// Invite links handed out before the landing page existed.
+app.get('/play/:code', (req, res) => res.redirect(302, `/dodgeball/play/${encodeURIComponent(req.params.code)}`));
 
 const server = http.createServer(app);
 const wss = new WebSocketServer({ noServer: true, maxPayload: 2048 });
@@ -96,7 +116,7 @@ const loop = setInterval(() => {
 }, 1000 / TICK_RATE);
 
 await initDb();
-server.listen(PORT, () => console.log(`Dodgeball running at http://localhost:${PORT}`));
+server.listen(PORT, () => console.log(`Gym Class running at http://localhost:${PORT}`));
 
 function shutdown() {
   console.log('Shutting down');

@@ -1,4 +1,5 @@
-/* Gym class: painted cinderblock wall, maple floor, red court lines, amber scoreboard. */
+/* Site shell shared by the landing page and every game:
+   gym class palette, painted cinderblock wall, maple floor panels, varsity lettering. */
 :root {
   --wall: #1e4a86;
   --wall-deep: #163a6b;
@@ -45,7 +46,7 @@ p { margin: 0 0 1rem; }
   clip: rect(0 0 0 0); white-space: nowrap;
 }
 
-/* Home */
+/* Banner */
 .banner { text-align: center; margin: 2rem auto 2.5rem; max-width: 60rem; }
 
 .title {
@@ -66,17 +67,6 @@ p { margin: 0 0 1rem; }
 }
 
 .tagline { font-size: var(--step-1); font-weight: 600; margin-top: 1.5rem; }
-
-.home-grid {
-  display: grid;
-  gap: 1.5rem;
-  max-width: 28rem;
-  margin: 0 auto;
-  grid-template-columns: 1fr;
-}
-@media (min-width: 760px) {
-  .home-grid.with-board { max-width: 52rem; grid-template-columns: 1.15fr 1fr; align-items: start; }
-}
 
 /* Panels are a slice of gym floor with a painted boundary line */
 .panel {
@@ -123,164 +113,73 @@ input {
 
 :focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
 
-.join-row { display: flex; gap: 0.5rem; margin-top: 1.25rem; }
-.join-row input { margin: 0; text-transform: uppercase; letter-spacing: 0.1em; }
-.join-row .btn { flex: none; }
-
-.invite-note { font-size: var(--step-1); }
-.text-link { display: inline-block; margin-top: 0.9rem; color: var(--ink); font-weight: 700; }
-
 .error { color: #8f1d16; font-weight: 700; margin: 1rem 0 0; min-height: 1.5em; }
 .error:empty { min-height: 0; margin: 0; }
+/* Errors shown against the wall rather than inside a panel */
+.error.on-wall { color: #ffc9c3; text-align: center; }
 
 .muted { opacity: 0.75; }
 
-/* Scoreboard: the one loud thing on the home screen */
-.scoreboard {
-  background: var(--board);
-  border: 6px solid #3a3a3a;
-  border-radius: 8px;
-  padding: 1.25rem 1.5rem;
-  color: var(--amber);
-  box-shadow: inset 0 0 0 2px #1d1d1d, 0 10px 0 var(--wall-deep);
-}
-.scoreboard h2 { color: var(--chalk); margin-top: 0; }
-.scoreboard ol { list-style: none; margin: 0; padding: 0; }
-.scoreboard li {
-  display: grid;
-  grid-template-columns: 1.6rem 1fr auto;
-  gap: 0.5rem;
-  padding: 0.3rem 0;
+/* Back to the game picker, shown on each game's home screen */
+.back-link {
+  display: inline-block;
   font-weight: 700;
-  border-bottom: 1px dashed rgba(255, 178, 30, 0.25);
+  color: var(--chalk);
+  text-decoration: none;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.4);
 }
-.scoreboard li:last-child { border-bottom: 0; }
-.scoreboard .num { font-family: var(--display); font-size: var(--step-1); text-shadow: 0 0 8px rgba(255, 178, 30, 0.6); }
-.scoreboard .empty { color: var(--chalk); opacity: 0.8; font-weight: 600; display: block; }
+.back-link:hover { border-bottom-color: var(--chalk); }
 
-/* Lobby */
-.lobby {
+/* Landing: the game picker */
+.games {
   display: grid;
   gap: 1.5rem;
-  max-width: 60rem;
+  max-width: 64rem;
   margin: 0 auto;
-  grid-template-columns: 1fr;
-  align-content: start;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  list-style: none;
+  padding: 0;
 }
-@media (min-width: 860px) { .lobby { grid-template-columns: 1fr 1fr; align-items: start; } }
 
-.code {
-  font-family: var(--display);
-  font-size: clamp(2.6rem, 9vw, 4rem);
-  line-height: 1;
+.game-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  color: var(--ink);
+  text-decoration: none;
+  border-top: 10px solid var(--accent, var(--court-red));
+}
+a.game-card { transition: transform 0.12s ease, box-shadow 0.12s ease; }
+a.game-card:hover { transform: translateY(-4px); box-shadow: 0 14px 0 var(--wall-deep); }
+a.game-card:active { transform: translateY(2px); box-shadow: 0 4px 0 var(--wall-deep); }
+
+.game-card h2 { font-size: var(--step-2); margin: 0; }
+.game-card .game-tagline { font-weight: 700; margin: 0; }
+.game-card .game-blurb { margin: 0; }
+
+.game-card .game-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: auto;
+  padding-top: 0.9rem;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+.game-card .play { margin-left: auto; font-family: var(--display); color: var(--accent, var(--court-red)); }
+
+.game-card.soon { opacity: 0.72; }
+.badge {
+  font-weight: 800;
+  font-size: 0.75rem;
   letter-spacing: 0.08em;
-  color: var(--court-red);
-  margin-bottom: 1rem;
-}
-
-.invite { display: flex; gap: 0.5rem; }
-.invite input { margin: 0; font-size: 0.9rem; }
-.invite .btn { flex: none; }
-
-.players { list-style: none; padding: 0; margin: 0 0 1.5rem; display: grid; gap: 0.4rem; }
-.players li {
-  display: flex; align-items: center; gap: 0.6rem;
-  font-weight: 700;
-  padding: 0.45rem 0.6rem;
-  background: rgba(255, 248, 238, 0.65);
-  border-radius: 4px;
-}
-.chip { width: 1rem; height: 1.3rem; border-radius: 3px; border: 2px solid var(--ink); flex: none; }
-.tag { margin-left: auto; font-size: 0.85rem; font-weight: 600; opacity: 0.75; }
-
-.how p { max-width: 60ch; }
-.keys { display: grid; grid-template-columns: max-content 1fr; gap: 0.4rem 1rem; margin: 0 0 1.25rem; }
-.keys dt { font-weight: 800; }
-.keys dd { margin: 0; }
-kbd {
-  font-family: var(--body);
-  font-weight: 700;
-  font-size: 0.85em;
-  padding: 0.05rem 0.4rem;
+  text-transform: uppercase;
+  padding: 0.15rem 0.5rem;
   border: 2px solid var(--ink);
-  border-bottom-width: 4px;
-  border-radius: 4px;
+  border-radius: 999px;
   background: #fff8ee;
 }
-
-/* Game */
-.game {
-  padding: 0;
-  height: 100%;
-  display: grid;
-  place-items: center;
-  background: #0d1b30;
-}
-.stage {
-  position: relative;
-  width: min(100vw, calc(100vh * 16 / 9));
-  aspect-ratio: 16 / 9;
-  user-select: none;
-}
-#canvas { display: block; width: 100%; height: 100%; cursor: crosshair; touch-action: none; }
-
-.hud { position: absolute; inset: 0; pointer-events: none; }
-
-.clock {
-  position: absolute; top: 1.5%; left: 50%; transform: translateX(-50%);
-  font-family: var(--display);
-  font-size: clamp(1rem, 2.6vw, 1.9rem);
-  color: var(--amber);
-  background: var(--board);
-  border: 4px solid #3a3a3a;
-  border-radius: 6px;
-  padding: 0.1em 0.6em;
-  text-shadow: 0 0 10px rgba(255, 178, 30, 0.7);
-}
-.clock.low { color: #ff5a3c; text-shadow: 0 0 10px rgba(255, 90, 60, 0.8); }
-
-.scores {
-  position: absolute; top: 1.5%; left: 1%;
-  list-style: none; margin: 0; padding: 0;
-  font-size: clamp(0.7rem, 1.3vw, 0.95rem);
-  font-weight: 700;
-}
-.scores li {
-  display: flex; align-items: center; gap: 0.45em;
-  padding: 0.15em 0.5em;
-  margin-bottom: 0.2em;
-  background: rgba(0, 0, 0, 0.55);
-  border-radius: 3px;
-}
-.scores .chip { width: 0.7em; height: 0.9em; border-width: 1px; border-color: #fff; }
-.scores .pts { margin-left: 0.6em; font-family: var(--display); color: var(--amber); }
-.scores li.me { outline: 2px solid var(--chalk); }
-
-.ping { position: absolute; top: 1.5%; right: 1%; font-size: 0.8rem; font-weight: 600; opacity: 0.7; }
-
-.results {
-  position: absolute; inset: 0;
-  display: grid; place-items: center;
-  background: rgba(13, 27, 48, 0.6);
-}
-.results[hidden] { display: none; }
-.results-card {
-  width: min(90%, 26rem);
-  background: var(--board);
-  color: var(--amber);
-  border: 6px solid #3a3a3a;
-  border-radius: 8px;
-  padding: 1.25rem 1.5rem;
-}
-.results-card h2 { color: var(--chalk); margin-top: 0; }
-.results-card ol { list-style: none; padding: 0; margin: 0 0 1rem; }
-.results-card li {
-  display: grid; grid-template-columns: 1.5rem 1rem 1fr auto; align-items: center; gap: 0.5rem;
-  padding: 0.35rem 0; font-weight: 700;
-}
-.results-card .num { font-family: var(--display); }
-.results-card .detail { font-size: 0.8rem; color: var(--chalk); opacity: 0.7; grid-column: 3 / -1; margin-top: -0.3rem; }
-.results-card .muted { color: var(--chalk); }
 
 .toast {
   position: fixed; left: 50%; bottom: 1.5rem; transform: translateX(-50%);
@@ -293,4 +192,5 @@ kbd {
 @media (prefers-reduced-motion: reduce) {
   .title { transform: none; }
   .toast { transition: none; }
+  a.game-card, a.game-card:hover, a.game-card:active { transition: none; transform: none; }
 }

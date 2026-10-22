@@ -1,0 +1,280 @@
+/* Hangman screens. Loaded after /style.css, which holds the shared gym-class shell.
+   The board is the classroom chalkboard that was always next to the gym. */
+:root {
+  --slate: #24413a;
+  --slate-deep: #16302a;
+  --chalk-dust: #eaf3ec;
+  --hit: #7fd8a2;
+  --miss: #ff8d7a;
+}
+
+.home-nav { max-width: 60rem; margin: 0 auto; }
+.home-grid { max-width: 28rem; margin: 0 auto; }
+
+/* Lobby */
+.lobby {
+  display: grid;
+  gap: 1.5rem;
+  max-width: 60rem;
+  margin: 0 auto;
+  grid-template-columns: 1fr;
+  align-content: start;
+}
+@media (min-width: 860px) { .lobby { grid-template-columns: 1fr 1fr; align-items: start; } }
+
+.code {
+  font-family: var(--display);
+  font-size: clamp(2.6rem, 9vw, 4rem);
+  line-height: 1;
+  letter-spacing: 0.08em;
+  color: #2f8f5b;
+  margin-bottom: 1rem;
+}
+
+.invite { display: flex; gap: 0.5rem; }
+.invite input { margin: 0; font-size: 0.9rem; }
+.invite .btn { flex: none; }
+
+.players { list-style: none; padding: 0; margin: 0 0 1.5rem; display: grid; gap: 0.4rem; }
+.players li {
+  display: flex; align-items: center; gap: 0.6rem;
+  font-weight: 700;
+  padding: 0.45rem 0.6rem;
+  background: rgba(255, 248, 238, 0.65);
+  border-radius: 4px;
+}
+.chip { width: 1rem; height: 1.3rem; border-radius: 3px; border: 2px solid var(--ink); flex: none; }
+.tag { margin-left: auto; font-size: 0.85rem; font-weight: 600; opacity: 0.75; }
+
+select {
+  font: inherit;
+  font-weight: 700;
+  padding: 0.55rem 0.7rem;
+  margin-bottom: 1rem;
+  color: var(--ink);
+  background: #fff8ee;
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+}
+
+.btn:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: 0 4px 0 var(--ink); }
+.btn:disabled:active { transform: none; }
+
+.steps { margin: 0 0 1rem; padding-left: 1.2rem; display: grid; gap: 0.5rem; }
+.steps li { font-weight: 600; }
+.how p { max-width: 60ch; }
+
+/* Game screen */
+.hm-game {
+  max-width: 68rem;
+  margin: 0 auto;
+  display: grid;
+  gap: 1rem;
+  align-content: start;
+  position: relative;
+}
+
+.hm-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.9rem 1.25rem;
+}
+.hm-meta { display: flex; align-items: center; gap: 0.75rem; }
+.hm-round { font-family: var(--display); font-size: var(--step-1); }
+
+.hm-clock-wrap { display: flex; align-items: center; gap: 0.75rem; margin-left: auto; flex: 1 1 12rem; }
+.hm-timebar {
+  flex: 1;
+  height: 0.9rem;
+  background: rgba(34, 27, 20, 0.2);
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.hm-timebar span {
+  display: block;
+  height: 100%;
+  width: 100%;
+  background: #2f8f5b;
+  transition: width 0.15s linear;
+}
+.hm-clock {
+  font-family: var(--display);
+  font-size: var(--step-2);
+  min-width: 2.2ch;
+  text-align: right;
+}
+.hm-clock.low { color: #a3251b; }
+
+.hm-main { display: grid; gap: 1rem; grid-template-columns: 1fr; }
+@media (min-width: 900px) { .hm-main { grid-template-columns: 1.3fr 1fr; align-items: start; } }
+
+/* Chalkboard */
+.chalkboard {
+  color: var(--chalk-dust);
+  background-color: var(--slate);
+  background-image: none;
+  border-color: var(--maple-deep);
+  outline-color: var(--maple);
+  text-align: center;
+}
+.chalkboard h2 { color: var(--chalk-dust); }
+
+.gallows { width: min(13rem, 48%); height: auto; display: block; margin: 0 auto; }
+.gallows .frame path {
+  fill: none;
+  stroke: var(--chalk-dust);
+  stroke-width: 4;
+  stroke-linecap: round;
+  opacity: 0.85;
+}
+.gallows .part {
+  fill: none;
+  stroke: var(--miss);
+  stroke-width: 4;
+  stroke-linecap: round;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+.gallows .part.shown { opacity: 1; }
+
+.hm-misses { font-weight: 700; opacity: 0.8; margin: 0.25rem 0 1rem; }
+
+.hm-board {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.35rem 1rem;
+  margin-bottom: 1rem;
+  min-height: 3rem;
+}
+.word { display: flex; gap: 0.25rem; }
+.tile {
+  font-family: var(--display);
+  font-size: clamp(1.1rem, 3.4vw, 1.9rem);
+  line-height: 1.6;
+  min-width: 1.1em;
+  text-align: center;
+}
+.tile.blank { border-bottom: 3px solid var(--chalk-dust); }
+/* Shown at the end of a round: a letter the group never guessed. */
+.tile.missed { color: var(--miss); border-bottom: 3px solid var(--miss); }
+.hm-empty { opacity: 0.7; font-weight: 600; margin: 0; }
+
+.hm-note { font-weight: 700; margin: 0 0 0.35rem; min-height: 1.5em; }
+.hm-note.outcome { font-size: var(--step-1); }
+.hm-note.outcome.solved { color: var(--hit); }
+.hm-note.outcome.hanged { color: var(--miss); }
+
+.hm-last { font-weight: 600; opacity: 0.85; margin: 0; min-height: 1.5em; }
+.hm-last.hit { color: var(--hit); }
+.hm-last.miss { color: var(--miss); }
+
+/* Voting */
+.hm-side { display: grid; gap: 1rem; align-content: start; }
+
+.letters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(2.5rem, 1fr));
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+.letter {
+  position: relative;
+  font: inherit;
+  font-weight: 800;
+  padding: 0.5rem 0;
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  background: #fff8ee;
+  color: var(--ink);
+  cursor: pointer;
+  box-shadow: 0 3px 0 var(--ink);
+}
+.letter:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }
+.letter.mine { background: #2f8f5b; color: var(--chalk); }
+.letter:disabled { cursor: not-allowed; box-shadow: none; opacity: 0.85; }
+.letter.hit { background: #bdebcd; }
+.letter.miss { background: #e7c3bb; text-decoration: line-through; }
+.letter .count {
+  position: absolute;
+  top: -0.45rem;
+  right: -0.3rem;
+  min-width: 1.25rem;
+  font-size: 0.7rem;
+  line-height: 1.25rem;
+  border-radius: 999px;
+  background: var(--board);
+  color: var(--amber);
+}
+.letter .count:empty { display: none; }
+
+.guess-row { display: flex; gap: 0.5rem; }
+.guess-row input { margin: 0; }
+.guess-row .btn { flex: none; }
+
+.guesses { list-style: none; margin: 0.75rem 0 0; padding: 0; display: grid; gap: 0.4rem; }
+.guesses .muted { font-weight: 600; }
+.btn.guess {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  text-align: left;
+  font-size: 0.95rem;
+}
+.btn.guess.mine { background: #2f8f5b; color: var(--chalk); }
+.guess-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.guess-by { margin-left: auto; font-size: 0.8rem; opacity: 0.8; white-space: nowrap; }
+
+.players li.voted { outline: 2px solid #2f8f5b; }
+
+/* Results */
+.results {
+  position: fixed; inset: 0;
+  display: grid; place-items: center;
+  background: rgba(13, 27, 48, 0.75);
+  padding: 1rem;
+  overflow: auto;
+}
+.results[hidden] { display: none; }
+.results-card {
+  width: min(100%, 30rem);
+  background: var(--board);
+  color: var(--amber);
+  border: 6px solid #3a3a3a;
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+}
+.results-card h2, .results-card h3 { color: var(--chalk); margin-top: 0; }
+.results-card h3 { font-family: var(--display); font-weight: 400; font-size: var(--step-0); margin: 1.25rem 0 0.5rem; }
+.results-card ol { list-style: none; padding: 0; margin: 0; }
+.results-card .muted { color: var(--chalk); }
+
+.results-rounds li {
+  display: grid;
+  grid-template-columns: 2rem 1fr auto;
+  gap: 0.4rem 0.6rem;
+  padding: 0.35rem 0;
+  font-weight: 700;
+  border-bottom: 1px dashed rgba(255, 178, 30, 0.25);
+}
+.results-rounds .round-no { font-family: var(--display); }
+.results-rounds .round-phrase { color: var(--chalk); overflow-wrap: anywhere; }
+.results-rounds .round-by { grid-column: 2; font-size: 0.8rem; font-weight: 600; opacity: 0.7; color: var(--chalk); }
+.results-rounds .round-outcome { grid-row: 1; grid-column: 3; font-size: 0.8rem; }
+.results-rounds li.solved .round-outcome { color: var(--hit); }
+.results-rounds li.hanged .round-outcome { color: var(--miss); }
+
+#results-list li {
+  display: grid; grid-template-columns: 1.5rem 1rem 1fr auto; align-items: center; gap: 0.5rem;
+  padding: 0.35rem 0; font-weight: 700;
+}
+#results-list .num { font-family: var(--display); }
+#results-list .detail { font-size: 0.8rem; color: var(--chalk); opacity: 0.7; grid-column: 3 / -1; margin-top: -0.3rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  .gallows .part, .hm-timebar span { transition: none; }
+}

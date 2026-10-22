@@ -1,13 +1,24 @@
-import { Game } from './game.js';
-import { RULES } from '../public/shared/physics.js';
-import { saveMatch } from './db.js';
+// Game-agnostic room plumbing: codes, roster, host handoff, lifecycle.
+// Each game subclasses BaseRoom (see server/<game>/room.js) and fills in the hooks:
+//
+//   maxPlayers        how many clients may join
+//   minPlayers        how many are needed before the host can start
+//   start(options)    begin a match; must set phase and broadcast
+//   step(dt, tock)    called from the global loop; no-op for turn-based games
+//   onJoin(id)        a client joined mid-match
+//   onLeave(id)       a client left
+//   onMessage(id,msg) game-specific client messages (base handles start/ping)
+//
+// Rooms are keyed by code across all games, so a code is enough to find a room
+// and `summary().game` tells the client which game client to load.
 
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O or 1/I
 const CODE_LENGTH = 5;
 const COLORS = ['#E8433A', '#2F7DE1', '#F2B134', '#2DB37A', '#9B5DE5', '#F07C2E', '#17B5C9', '#E05A9C'];
 const EMPTY_ROOM_TTL_MS = 60_000;
-const RESULTS_MS = 10_000;
-const MAX_BUFFERED_BYTES = 256 * 1024;
+
+export const RESULTS_MS = 10_000;
+export const MAX_BUFFERED_BYTES = 256 * 1024;
 
 function makeCode() {
   let code = '';
@@ -18,21 +29,28 @@ function makeCode() {
 }
 
 function cleanName(raw) {
-  const s = String(raw ?? '').replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 16);
+  const printable = [...String(raw ?? '')].filter((ch) => {
+    const code = ch.codePointAt(0);
+    return code >= 32 && code !== 127;
+  });
+  const s = printable.join('').trim().slice(0, 16);
   return s || 'Player';
 }
 
-function send(ws, obj) {
+export function send(ws, obj) {
   if (ws.readyState === 1) ws.send(JSON.stringify(obj));
 }
 
-export class Room {
+export class BaseRoom {
+  static gameId = 'base';
+  static maxPlayers = 8;
+  static minPlayers = 1;
+
   constructor(code) {
     this.code = code;
     this.clients = new Map(); // id -> { ws, name, color }
     this.hostId = null;
     this.phase = 'lobby';     // lobby | playing | ended
-    this.game = null;
     this.startedAt = null;
     this.lastResults = null;
     this.resultsTimer = null;
@@ -40,13 +58,24 @@ export class Room {
     this.emptySince = Date.now();
   }
 
+  // `gameId`, not `game`: subclasses keep their simulation on `this.game`.
+  get gameId() { return this.constructor.gameId; }
+  get maxPlayers() { return this.constructor.maxPlayers; }
+  get minPlayers() { return this.constructor.minPlayers; }
+
   summary() {
-    return { code: this.code, phase: this.phase, players: this.clients.size, maxPlayers: RULES.maxPlayers };
+    return {
+      code: this.code,
+      game: this.gameId,
+      phase: this.phase,
+      players: this.clients.size,
+      maxPlayers: this.maxPlayers,
+    };
   }
 
   connect(ws, rawName) {
-    if (this.clients.size >= RULES.maxPlayers) {
-      send(ws, { type: 'error', message: `This game is full (${RULES.maxPlayers} players max).` });
+    if (this.clients.size >= this.maxPlayers) {
+      send(ws, { type: 'error', message: `This game is full (${this.maxPlayers} players max).` });
       ws.close(4003, 'full');
       return;
     }
@@ -58,12 +87,12 @@ export class Room {
     this.emptySince = null;
     if (!this.hostId) this.hostId = id;
 
-    send(ws, { type: 'welcome', id, code: this.code });
-    if (this.phase === 'playing') this.game.addPlayer(id, name, color);
+    send(ws, { type: 'welcome', id, code: this.code, game: this.gameId });
+    if (this.phase === 'playing') this.onJoin(id);
     if (this.phase === 'ended') send(ws, { type: 'ended', results: this.lastResults });
     this.broadcastRoster();
 
-    ws.on('message', (data) => this.onMessage(id, data));
+    ws.on('message', (data) => this.receive(id, data));
     ws.on('close', () => this.leave(id));
   }
 
@@ -76,77 +105,64 @@ export class Room {
     }
   }
 
-  onMessage(id, data) {
+  receive(id, data) {
     let msg;
     try { msg = JSON.parse(data); } catch { return; }
     if (!msg || typeof msg.type !== 'string') return;
 
     switch (msg.type) {
-      case 'input':
-        if (this.phase === 'playing') this.game.setInput(id, msg);
-        break;
       case 'start':
-        if (id === this.hostId && this.phase !== 'playing') this.start();
-        break;
-      case 'ping': {
-        const client = this.clients.get(id);
-        if (client) send(client.ws, { type: 'pong', t: msg.t });
-        break;
-      }
+        if (id !== this.hostId || this.phase === 'playing') return;
+        if (this.clients.size < this.minPlayers) {
+          this.toClient(id, { type: 'error', message: `You need at least ${this.minPlayers} players to start.` });
+          return;
+        }
+        clearTimeout(this.resultsTimer);
+        this.start(msg);
+        return;
+      case 'ping':
+        this.toClient(id, { type: 'pong', t: msg.t });
+        return;
+      default:
+        this.onMessage(id, msg);
     }
-  }
-
-  start() {
-    clearTimeout(this.resultsTimer);
-    this.game = new Game();
-    for (const [id, c] of this.clients) this.game.addPlayer(id, c.name, c.color);
-    this.phase = 'playing';
-    this.startedAt = new Date();
-    this.broadcastRoster();
-  }
-
-  step(dt, sendSnapshot) {
-    if (this.phase !== 'playing') return;
-    this.game.step(dt);
-    if (sendSnapshot) {
-      const payload = JSON.stringify({ type: 'state', ...this.game.snapshot() });
-      for (const { ws } of this.clients.values()) {
-        // Skip a frame for slow clients rather than queueing stale state.
-        if (ws.readyState === 1 && ws.bufferedAmount < MAX_BUFFERED_BYTES) ws.send(payload);
-      }
-    }
-    if (this.game.timeLeft <= 0) this.end();
-  }
-
-  end() {
-    const results = this.game.results();
-    this.phase = 'ended';
-    this.lastResults = results;
-    this.broadcast({ type: 'ended', results });
-    this.broadcastRoster();
-    saveMatch(this.code, this.startedAt, results).catch((err) => console.error(err));
-
-    this.resultsTimer = setTimeout(() => {
-      if (this.phase !== 'ended') return;
-      this.phase = 'lobby';
-      this.game = null;
-      this.broadcastRoster();
-    }, RESULTS_MS);
   }
 
   leave(id) {
     if (!this.clients.delete(id)) return;
-    this.game?.removePlayer(id);
+    this.onLeave(id);
     if (this.hostId === id) this.hostId = this.clients.keys().next().value ?? null;
 
     if (this.clients.size === 0) {
       this.emptySince = Date.now();
       clearTimeout(this.resultsTimer);
-      this.phase = 'lobby';
-      this.game = null;
+      this.reset();
       return;
     }
     this.broadcastRoster();
+  }
+
+  // Back to the lobby a few seconds after a match ends.
+  endWith(results) {
+    this.phase = 'ended';
+    this.lastResults = results;
+    this.broadcast({ type: 'ended', results });
+    this.broadcastRoster();
+
+    this.resultsTimer = setTimeout(() => {
+      if (this.phase !== 'ended') return;
+      this.reset();
+      this.broadcastRoster();
+    }, RESULTS_MS);
+  }
+
+  reset() {
+    this.phase = 'lobby';
+  }
+
+  toClient(id, obj) {
+    const client = this.clients.get(id);
+    if (client) send(client.ws, obj);
   }
 
   broadcast(obj) {
@@ -158,24 +174,40 @@ export class Room {
     this.broadcast({
       type: 'roster',
       code: this.code,
+      game: this.gameId,
       phase: this.phase,
       hostId: this.hostId,
       players: [...this.clients].map(([id, c]) => ({ id, name: c.name, color: c.color })),
     });
   }
+
+  // Hooks with no useful default.
+  start() {}
+  step() {}
+  onJoin() {}
+  onLeave() {}
+  onMessage() {}
 }
 
 export class RoomManager {
-  constructor() {
+  // roomClasses: { [gameId]: class extends BaseRoom }
+  constructor(roomClasses) {
+    this.roomClasses = roomClasses;
     this.rooms = new Map();
     this.sweeper = setInterval(() => this.sweep(), 10_000);
     this.sweeper.unref();
   }
 
-  create() {
+  supports(game) {
+    return Object.hasOwn(this.roomClasses, game);
+  }
+
+  create(game) {
+    const RoomClass = this.roomClasses[game];
+    if (!RoomClass) return null;
     let code;
     do { code = makeCode(); } while (this.rooms.has(code));
-    const room = new Room(code);
+    const room = new RoomClass(code);
     this.rooms.set(code, room);
     return room;
   }
@@ -188,8 +220,8 @@ export class RoomManager {
     return this.rooms.size;
   }
 
-  step(dt, sendSnapshot) {
-    for (const room of this.rooms.values()) room.step(dt, sendSnapshot);
+  step(dt, tock) {
+    for (const room of this.rooms.values()) room.step(dt, tock);
   }
 
   // Remove rooms that have been empty for a while (including ones never joined).

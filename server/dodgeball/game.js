@@ -1,7 +1,7 @@
 import {
   PLAYER, BALL, RULES, SPAWNS, BALL_SPAWNS,
   clamp, circleRect, stepPlayer, stepBall,
-} from '../public/shared/physics.js';
+} from '../../public/games/dodgeball/shared/physics.js';
 
 const round1 = (n) => Math.round(n * 10) / 10;
 

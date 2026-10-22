@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hangman</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%232f8f5b'/><path d='M8 25V7h11M19 7v4' stroke='%23fff' stroke-width='2' fill='none'/><circle cx='19' cy='14' r='3' fill='none' stroke='%23fff' stroke-width='2'/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Graduate&family=Barlow:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/games/hangman/style.css">
+</head>
+<body>
+  <section id="home" class="screen">
+    <nav class="home-nav"><a class="back-link" href="/">&larr; All games</a></nav>
+    <header class="banner">
+      <h1 class="title">Hangman</h1>
+      <p class="tagline">One player sets the phrase. Everyone else votes on the next letter.</p>
+    </header>
+
+    <div class="home-grid">
+      <div class="panel">
+        <label for="name">Your name</label>
+        <input id="name" maxlength="16" autocomplete="nickname" placeholder="Sam" spellcheck="false">
+
+        <div id="invite-block" hidden>
+          <p class="invite-note">You're invited to game <strong id="invite-code"></strong>.</p>
+          <button id="join-invited" class="btn primary" type="button">Join game</button>
+          <a class="text-link" href="/hangman">Start your own game instead</a>
+        </div>
+
+        <div id="host-block">
+          <button id="create" class="btn primary" type="button">Create game</button>
+          <form id="join-form" class="join-row">
+            <label class="visually-hidden" for="join-code">Game code</label>
+            <input id="join-code" maxlength="8" placeholder="Game code" autocomplete="off" spellcheck="false">
+            <button class="btn" type="submit">Join</button>
+          </form>
+        </div>
+
+        <p id="home-error" class="error" role="alert"></p>
+      </div>
+    </div>
+  </section>
+
+  <section id="lobby" class="screen lobby" hidden>
+    <div class="panel lobby-panel">
+      <p class="muted">Game code</p>
+      <div id="lobby-code" class="code"></div>
+      <div class="invite">
+        <label class="visually-hidden" for="invite-url">Invite link</label>
+        <input id="invite-url" readonly>
+        <button id="copy-link" class="btn" type="button">Copy invite link</button>
+      </div>
+
+      <h2>Players <span id="player-count" class="muted"></span></h2>
+      <ul id="player-list" class="players"></ul>
+
+      <div id="host-controls" hidden>
+        <label for="rounds">Rounds</label>
+        <select id="rounds">
+          <option value="3" selected>3 rounds</option>
+          <option value="5">5 rounds</option>
+        </select>
+        <button id="start" class="btn primary" type="button">Start game</button>
+      </div>
+      <p id="waiting" class="muted" hidden>Waiting for the host to start the game.</p>
+      <p id="need-players" class="muted" hidden>You need at least two players: one to set the phrase, one to guess.</p>
+    </div>
+
+    <div class="panel how">
+      <h2>How to play</h2>
+      <ol class="steps">
+        <li>Each round one player is picked to type a phrase. Everyone else guesses it together.</li>
+        <li>Every turn lasts 30 seconds. Click a letter to vote for it, or propose a full-phrase guess and others can back that instead.</li>
+        <li>Whatever has the most votes when the clock runs out is submitted. Ties are settled by coin flip, and the turn ends early once everyone has voted.</li>
+        <li>A wrong letter <em>or</em> a wrong phrase guess costs a limb. Six and the group is hanged.</li>
+      </ol>
+      <p>It's co-op: the phrase setter scores nothing, so there's no reason to pick something nobody can get. The results screen shows how many rounds the room solved and who backed the right calls.</p>
+    </div>
+  </section>
+
+  <section id="game" class="screen hm-game" hidden>
+    <div class="hm-top panel">
+      <div class="hm-meta">
+        <span id="hm-round" class="hm-round">Round 1 of 3</span>
+        <span id="hm-solved" class="badge">Solved 0</span>
+      </div>
+      <div class="hm-clock-wrap">
+        <div id="hm-timebar" class="hm-timebar"><span></span></div>
+        <span id="hm-clock" class="hm-clock">30</span>
+      </div>
+    </div>
+
+    <div class="hm-main">
+      <div class="panel chalkboard">
+        <svg id="gallows" class="gallows" viewBox="0 0 120 150" aria-hidden="true">
+          <g class="frame">
+            <path d="M10 145 H70 M25 145 V10 M25 10 H85 M85 10 V28 M25 32 L52 10" />
+          </g>
+          <g class="parts">
+            <circle class="part" data-part="1" cx="85" cy="42" r="14" />
+            <path class="part" data-part="2" d="M85 56 V96" />
+            <path class="part" data-part="3" d="M85 66 L65 86" />
+            <path class="part" data-part="4" d="M85 66 L105 86" />
+            <path class="part" data-part="5" d="M85 96 L68 125" />
+            <path class="part" data-part="6" d="M85 96 L102 125" />
+          </g>
+        </svg>
+        <p id="hm-misses" class="hm-misses">0 of 6 misses</p>
+        <div id="hm-board" class="hm-board" aria-live="polite"></div>
+        <p id="hm-note" class="hm-note"></p>
+        <p id="hm-last" class="hm-last"></p>
+      </div>
+
+      <div class="hm-side">
+        <div id="write-panel" class="panel" hidden>
+          <h2>Your phrase</h2>
+          <p class="muted">Everyone else will guess this one letter at a time. Keep it gettable.</p>
+          <form id="phrase-form">
+            <label class="visually-hidden" for="phrase-input">Phrase</label>
+            <input id="phrase-input" maxlength="48" placeholder="A phrase to guess" autocomplete="off" spellcheck="false">
+            <button class="btn primary" type="submit">Set phrase</button>
+          </form>
+        </div>
+
+        <div id="vote-panel" class="panel" hidden>
+          <h2>Vote a letter</h2>
+          <div id="letters" class="letters"></div>
+
+          <h2>Or solve it</h2>
+          <form id="guess-form" class="guess-row">
+            <label class="visually-hidden" for="guess-input">Your guess at the phrase</label>
+            <input id="guess-input" maxlength="48" placeholder="Guess the whole phrase" autocomplete="off" spellcheck="false">
+            <button class="btn" type="submit">Propose</button>
+          </form>
+          <ul id="guesses" class="guesses"></ul>
+        </div>
+
+        <div class="panel">
+          <h2>Room <span id="hm-votes-count" class="muted"></span></h2>
+          <ul id="hm-players" class="players"></ul>
+        </div>
+      </div>
+    </div>
+
+    <div id="results" class="results" hidden>
+      <div class="results-card">
+        <h2 id="results-title">Final score</h2>
+        <p id="results-sub" class="muted"></p>
+        <ol id="results-rounds" class="results-rounds"></ol>
+        <h3>Who called it</h3>
+        <ol id="results-list"></ol>
+        <p id="results-note" class="muted">Back to the lobby in a few seconds.</p>
+        <button id="play-again" class="btn primary" type="button" hidden>Play again</button>
+      </div>
+    </div>
+  </section>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script type="module" src="/games/hangman/js/main.js"></script>
+</body>
+</html>
