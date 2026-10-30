@@ -14,7 +14,19 @@
 
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O or 1/I
 const CODE_LENGTH = 5;
-const COLORS = ['#E8433A', '#2F7DE1', '#F2B134', '#2DB37A', '#9B5DE5', '#F07C2E', '#17B5C9', '#E05A9C'];
+// The first eight are hand-picked and stay in this order, so small rooms always
+// look the same. Hangman seats far more than that, so the tail is generated: a
+// golden-angle hue walk, alternating between a light and a deep band, keeps
+// back-to-back joiners from landing on near-identical colors.
+const PICKED_COLORS = ['#E8433A', '#2F7DE1', '#F2B134', '#2DB37A', '#9B5DE5', '#F07C2E', '#17B5C9', '#E05A9C'];
+const MAX_COLORS = 40;
+const COLORS = [
+  ...PICKED_COLORS,
+  ...Array.from({ length: MAX_COLORS - PICKED_COLORS.length }, (_, i) => {
+    const hue = Math.round((i * 137.508) % 360);
+    return i % 2 ? `hsl(${hue}, 72%, 62%)` : `hsl(${hue}, 54%, 46%)`;
+  }),
+];
 const EMPTY_ROOM_TTL_MS = 60_000;
 
 export const RESULTS_MS = 10_000;

@@ -2,7 +2,7 @@
 // no Node APIs, no DOM. All hangman tuning lives here.
 
 export const HANGMAN = {
-  maxPlayers: 8,
+  maxPlayers: 40,
   minPlayers: 2,          // a setter plus at least one guesser
 
   maxMisses: 6,           // head, body, two arms, two legs

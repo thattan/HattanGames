@@ -19,7 +19,7 @@ export const GAMES = [
     name: 'Hangman',
     tagline: 'Vote a letter. Don’t hang the group.',
     blurb: 'One player sets a phrase, everyone else gets 30 seconds a turn to vote on the next letter — or gamble on solving it outright.',
-    players: '2-8 players',
+    players: '2-40 players',
     path: '/hangman',
     status: 'live',
     accent: '#2f8f5b',
