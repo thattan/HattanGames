@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tic Tac Toe</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%235b3c86'/><g stroke='%23ffffff' stroke-width='2' opacity='.45'><path d='M13 5V27M20 5V27M5 13H27M5 20H27'/></g><g stroke='%23ffffff' stroke-width='3' stroke-linecap='round'><path d='M7 7L11 11M11 7L7 11'/></g><circle cx='24' cy='24' r='3' fill='none' stroke='%23ffb21e' stroke-width='3'/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Graduate&family=Barlow:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/games/tictactoe/style.css">
+</head>
+<body>
+  <section id="home" class="screen home">
+    <nav class="home-nav"><a class="back-link" href="/">&larr; All games</a></nav>
+    <header class="banner">
+      <h1 class="title">Tic Tac Toe</h1>
+      <p class="tagline">Three in a row, best of the series. Two players, head to head.</p>
+    </header>
+
+    <div class="home-grid">
+      <div class="panel">
+        <label for="name">Your name</label>
+        <input id="name" maxlength="16" autocomplete="nickname" placeholder="Sam" spellcheck="false">
+
+        <div id="invite-block" hidden>
+          <p class="invite-note">You're invited to game <strong id="invite-code"></strong>.</p>
+          <button id="join-invited" class="btn primary" type="button">Join game</button>
+          <a class="text-link" href="/tictactoe">Start your own game instead</a>
+        </div>
+
+        <div id="host-block">
+          <button id="create" class="btn primary" type="button">Create game</button>
+          <form id="join-form" class="join-row">
+            <label class="visually-hidden" for="join-code">Game code</label>
+            <input id="join-code" maxlength="8" placeholder="Game code" autocomplete="off" spellcheck="false">
+            <button class="btn" type="submit">Join</button>
+          </form>
+        </div>
+
+        <p id="home-error" class="error" role="alert"></p>
+      </div>
+    </div>
+  </section>
+
+  <section id="lobby" class="screen lobby" hidden>
+    <div class="panel lobby-panel">
+      <p class="muted">Game code</p>
+      <div id="lobby-code" class="code"></div>
+      <div class="invite">
+        <label class="visually-hidden" for="invite-url">Invite link</label>
+        <input id="invite-url" readonly>
+        <button id="copy-link" class="btn" type="button">Copy invite link</button>
+      </div>
+
+      <h2>Players <span id="player-count" class="muted"></span></h2>
+      <ul id="player-list" class="players"></ul>
+
+      <div id="rounds-row" class="rounds-row" hidden>
+        <label for="rounds">Rounds</label>
+        <select id="rounds">
+          <option value="3" selected>3 rounds</option>
+          <option value="5">5 rounds</option>
+        </select>
+      </div>
+
+      <button id="start" class="btn primary" type="button" hidden>Start game</button>
+      <p id="need-two" class="muted" hidden>Send the invite link to someone &mdash; tic tac toe needs two.</p>
+      <p id="waiting" class="muted" hidden>Waiting for the host to start the game.</p>
+    </div>
+
+    <div class="panel how">
+      <h2>How to play</h2>
+      <p>Three in a row wins the round &mdash; across, down, or corner to corner. X always moves first, and the X seat swaps every round so neither of you keeps the first-move advantage.</p>
+      <p>You get 20 seconds a move. Run the clock out and a random empty square gets played for you, so nobody can stall the match. The results screen counts it against you.</p>
+      <p>Most rounds won takes the match. Draws count for neither of you, and an even series is an even series &mdash; there's no tiebreak.</p>
+    </div>
+  </section>
+
+  <section id="game" class="screen game" hidden>
+    <div class="table">
+      <div class="ttt-top">
+        <span id="round" class="round">Round 1 of 3</span>
+        <span id="clock" class="clock">20</span>
+        <span id="draws" class="draws"></span>
+      </div>
+
+      <ol id="scores" class="scores"></ol>
+
+      <div id="board" class="board" role="group" aria-label="Tic tac toe board"></div>
+
+      <p id="status" class="status" role="status" aria-live="polite"></p>
+    </div>
+
+    <div id="results" class="results" hidden>
+      <div class="results-card">
+        <h2 id="results-title">Final score</h2>
+        <ol id="results-list"></ol>
+        <p id="results-note" class="muted">Back to the lobby in a few seconds.</p>
+        <button id="play-again" class="btn primary" type="button" hidden>Play again</button>
+      </div>
+    </div>
+  </section>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script type="module" src="/games/tictactoe/js/main.js"></script>
+</body>
+</html>

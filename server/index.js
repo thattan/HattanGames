@@ -6,6 +6,8 @@ import { WebSocketServer } from 'ws';
 import { RoomManager } from './rooms.js';
 import { DodgeballRoom } from './dodgeball/room.js';
 import { HangmanRoom } from './hangman/room.js';
+import { SharksRoom } from './sharks/room.js';
+import { TicTacToeRoom } from './tictactoe/room.js';
 import { initDb, dbEnabled, getLeaderboard, closeDb } from './db.js';
 import { GAMES } from './games.js';
 import { TICK_RATE, SNAPSHOT_RATE } from '../public/games/dodgeball/shared/physics.js';
@@ -17,6 +19,8 @@ const PORT = Number(process.env.PORT) || 3000;
 const rooms = new RoomManager({
   [DodgeballRoom.gameId]: DodgeballRoom,
   [HangmanRoom.gameId]: HangmanRoom,
+  [SharksRoom.gameId]: SharksRoom,
+  [TicTacToeRoom.gameId]: TicTacToeRoom,
 });
 const app = express();
 

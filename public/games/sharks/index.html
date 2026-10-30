@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sharks &amp; Minnows</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%2315607a'/><path d='M17 22 L17 8 L7 22 Z' fill='%23ffffff'/><path d='M2 26 Q8 22 14 26 T30 26' stroke='%23ffffff' stroke-width='2.5' fill='none' opacity='.7'/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Graduate&family=Barlow:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/games/sharks/style.css">
+</head>
+<body>
+  <section id="home" class="screen home">
+    <nav class="home-nav"><a class="back-link" href="/">&larr; All games</a></nav>
+    <header class="banner">
+      <h1 class="title">Sharks &amp; Minnows</h1>
+      <p class="tagline">Get to the far wall. Don&rsquo;t get caught. Up to 16 players a game.</p>
+    </header>
+
+    <div class="home-grid">
+      <div class="panel">
+        <label for="name">Your name</label>
+        <input id="name" maxlength="16" autocomplete="nickname" placeholder="Sam" spellcheck="false">
+
+        <div id="invite-block" hidden>
+          <p class="invite-note">You're invited to game <strong id="invite-code"></strong>.</p>
+          <button id="join-invited" class="btn primary" type="button">Join game</button>
+          <a class="text-link" href="/sharks">Start your own game instead</a>
+        </div>
+
+        <div id="host-block">
+          <button id="create" class="btn primary" type="button">Create game</button>
+          <form id="join-form" class="join-row">
+            <label class="visually-hidden" for="join-code">Game code</label>
+            <input id="join-code" maxlength="8" placeholder="Game code" autocomplete="off" spellcheck="false">
+            <button class="btn" type="submit">Join</button>
+          </form>
+        </div>
+
+        <p id="home-error" class="error" role="alert"></p>
+      </div>
+    </div>
+  </section>
+
+  <section id="lobby" class="screen lobby" hidden>
+    <div class="panel lobby-panel">
+      <p class="muted">Game code</p>
+      <div id="lobby-code" class="code"></div>
+      <div class="invite">
+        <label class="visually-hidden" for="invite-url">Invite link</label>
+        <input id="invite-url" readonly>
+        <button id="copy-link" class="btn" type="button">Copy invite link</button>
+      </div>
+
+      <h2>Players <span id="player-count" class="muted"></span></h2>
+      <ul id="player-list" class="players"></ul>
+
+      <button id="start" class="btn primary" type="button" hidden>Start game</button>
+      <p id="need-more" class="muted" hidden>Send the invite link to someone &mdash; you need at least two to play.</p>
+      <p id="waiting" class="muted" hidden>Waiting for the host to start the game.</p>
+    </div>
+
+    <div class="panel how">
+      <h2>How to play</h2>
+      <dl class="keys">
+        <dt>Move</dt><dd><kbd>A</kbd> <kbd>D</kbd> or <kbd>&larr;</kbd> <kbd>&rarr;</kbd></dd>
+        <dt>Jump</dt><dd><kbd>W</kbd>, <kbd>&uarr;</kbd> or <kbd>Space</kbd></dd>
+        <dt>Drop down</dt><dd><kbd>S</kbd> or <kbd>&darr;</kbd></dd>
+        <dt>Dash</dt><dd>Left click, <kbd>J</kbd> or <kbd>Shift</kbd></dd>
+      </dl>
+      <p>Everyone starts as a minnow except a few sharks. On the whistle you have 20 seconds to reach the painted wall on the far side. Make it and you score a point and sit the rest of the crossing out safely.</p>
+      <p>Get tagged and you turn shark on the spot &mdash; so the last few seconds of a crossing are the dangerous ones. Sharks score a point per tag and can never set foot in either safe wall, though the wall you started behind only shelters you for the first three seconds.</p>
+      <p>Still in the water when the whistle goes? The sharks got you. Play continues, direction reversed, until one minnow is left against the pack.</p>
+      <p>Both sides get a dash. The shark&rsquo;s goes further; the minnow&rsquo;s recovers faster, so a well-read juke beats a lunge.</p>
+    </div>
+  </section>
+
+  <section id="game" class="screen game" hidden>
+    <div class="stage" id="stage">
+      <canvas id="canvas" aria-label="Sharks and minnows arena"></canvas>
+      <div class="hud">
+        <ol id="scores" class="scores"></ol>
+        <div class="clock-stack">
+          <div id="crossing" class="crossing"></div>
+          <div id="clock" class="clock">20</div>
+          <div id="stage-label" class="stage-label"></div>
+        </div>
+        <div class="status">
+          <span id="role" class="role"></span>
+          <span id="tally-counts" class="counts"></span>
+          <span id="dash" class="dash-pip">Dash</span>
+        </div>
+        <div id="ping" class="ping"></div>
+      </div>
+      <div id="results" class="results" hidden>
+        <div class="results-card">
+          <h2 id="results-title">Final score</h2>
+          <ol id="results-list"></ol>
+          <p id="results-note" class="muted">Back to the lobby in a few seconds.</p>
+          <button id="play-again" class="btn primary" type="button" hidden>Play again</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script type="module" src="/games/sharks/js/main.js"></script>
+</body>
+</html>

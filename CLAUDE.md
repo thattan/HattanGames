@@ -8,6 +8,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **Dodgeball** (`/dodgeball`) — real-time multiplayer 2D platformer. Up to 8 players per room throw, catch, and bank balls off gym walls in 2-minute rounds.
 - **Hangman** (`/hangman`) — turn-based and co-op. One player sets a phrase; everyone else votes each 30-second turn on a letter or a full-phrase guess, and the top vote is submitted.
+- **Sharks & Minnows** (`/sharks`) — real-time, same platformer engine shape as dodgeball. Up to 16 players sprint between two safe walls while sharks patrol the middle; tagged minnows turn shark, last minnow standing wins.
+- **Tic Tac Toe** (`/tictactoe`) — strictly two players, turn-based. Best of 3 or 5 rounds, 20 seconds a move, with the X seat alternating every round.
 
 Express serves the clients and a small REST API, `ws` handles real-time play, Postgres (optional) records dodgeball match history for an all-time leaderboard.
 
@@ -65,7 +67,7 @@ Two things to watch:
 - `this.gameId` is the game's id; `this.game` is free for a subclass to use for its simulation. Don't add a `game` getter to the base or subclass assignment throws.
 - Because codes are global, a code typed into the wrong game's join box resolves to the other game. `GET /api/rooms/:code` returns `game`, and each client redirects to `/<game>/play/<code>` when it doesn't match.
 
-Dodgeball needs the 60 Hz loop; hangman only needs its turn clocks, so its `step()` just advances timers and broadcasts on change (plus a 1 Hz push so client countdowns don't drift).
+Dodgeball and sharks need the 60 Hz loop; hangman and tic tac toe only need their turn clocks, so their `step()` just advances timers and broadcasts on change (plus a 1 Hz push so client countdowns don't drift).
 
 ### Authoritative server, dumb client
 
@@ -75,11 +77,13 @@ The server owns all simulation. Clients send input only; every hit, catch, vote,
 - `server/rooms.js` — `RoomManager` (code generation, 10 s sweeper for rooms empty > 60 s) and `BaseRoom`. Room codes are 5 chars from an alphabet with no `0/O` or `1/I`; lookups uppercase the input.
 - `server/dodgeball/game.js` — the dodgeball simulation: players, balls, throws, catches, hits, respawns, scoring, and `snapshot()` / `results()`.
 - `server/hangman/game.js` — the hangman round machine: setter rotation, the ballot, vote resolution, misses, and per-player contribution stats.
+- `server/sharks/game.js` — the sharks crossing machine: role assignment, the countdown/running/tally stages, safe-wall containment, tagging, and scoring.
+- `server/tictactoe/game.js` — the tic tac toe match machine: seat alternation, move validation, win and draw detection, and the move clock.
 - `server/db.js` — optional Postgres, dodgeball only. `initDb()` retries 5 times with backoff then gives up and runs without history. `db/schema.sql` is applied on every start and must stay idempotent.
 
 ### Dodgeball
 
-Everything from here to "REST API" is dodgeball unless it says otherwise.
+Everything from here to "Hangman" is dodgeball unless it says otherwise.
 
 #### Shared physics
 
@@ -123,6 +127,33 @@ A round is a four-stage machine in `HangmanGame`: `writing` (60 s for the setter
 
 Client → server: `phrase` (setter), `vote` (`key` is a letter or a guess key like `g1`, or `null` to clear), `propose`, plus the shared `start` (carries `rounds`) and `ping`. Only single-character keys are uppercased — uppercasing a guess key breaks the lookup.
 
+### Sharks & Minnows
+
+Real-time, and the closest relative of dodgeball — but a deliberate sibling, not a reuse. `public/games/sharks/shared/physics.js` holds its own `WORLD`, `PLAYER`, `SPEED`, `DASH`, `RULES`, `SAFE`, `PLATFORMS` and its own copy of `stepPlayer`. **Don't collapse that into an import of dodgeball's physics**: the two games pull the same constants in opposite directions, and sharing the file means retuning one silently retunes the other. The ~60 duplicated lines are the price of that independence.
+
+A match is a sequence of crossings, each a three-stage machine in `SharksGame`: `countdown` (3 s, minnows penned at the starting wall) → `running` (20 s of live tagging) → `tally` (3 s) → the next crossing with the direction flipped, or `done`.
+
+- **The walls are the whole game.** They're enforced in `confine()` rather than in the shared step, because they're a rule, not physics. Sharks are pushed out of the destination wall always, and out of the *starting* wall only for `graceSeconds` after the whistle — after that a minnow who stayed home is fair game, which is what stops camping.
+- **Tagged minnows turn shark immediately**, mid-crossing, so a crossing gets more dangerous as it runs. Anyone still in the water at the whistle is converted too (`stranded`).
+- **A shark takes one minnow at a time** (`tagCooldown`). Without it, one shark running through the start-line pile converts the entire pack in a single frame.
+- **Minnows are 7% faster flat out** (`SPEED`), applied via `p.speedMul` inside `stepPlayer`. That one number is what makes the game a game: a shark can't just run a minnow down from behind, it has to cut them off or spend its lunge. If you ever make sharks faster, there is no counterplay left.
+- Sharks start in a band well clear of both walls (`PATROL_MARGIN`); starting them on the line wipes the pack out on the first crossing.
+- The match ends when one minnow faces a pack of two or more (they win, `won`), when the sharks have everyone, or at `maxCrossings`. With exactly two players the lone shark isn't a pack, so that match runs until the minnow is finally caught.
+
+Client → server: `input` (`left right down jump` plus the `js`/`ds` press counters), plus the shared `start` and `ping`. Server → client adds `stage`, `stageLeft`, `crossing`, `dir`, `grace`, `minnows`, `sharks` to the snapshot; per-player fields are `x y vx vy f r st d k s` (`r` shark, `st` safe, `d` dash ready, `k` dashing).
+
+### Tic Tac Toe
+
+Strictly two seats — a third connection gets `BaseRoom`'s room-full close. Turn-based, so it follows hangman's room shape: `step()` only advances the clock and pushes state on change plus 1 Hz. There's no per-player secret state, so unlike hangman a single `broadcast` is correct.
+
+`public/games/tictactoe/shared/rules.js` holds `TTT`, `LINES`, `winningLine`, `isFull`, `openCells`, `isPlayable` — the client uses the same validation the server enforces, so the board can disable squares without guessing.
+
+- **X always moves first and the X seat alternates every round** (`beginRound` indexes join order by round number), so neither player keeps the first-move advantage. If you change round handling, keep that alternation.
+- **The move clock auto-plays a random open square** rather than forfeiting, so one idle player can't freeze the match. It's counted as a `timeout` against them and shown on the results screen.
+- A walkout ends the match with `cutShort` and crowns nobody; so does a tied series. There's no tiebreak round.
+
+Client → server: `play` (`cell`, 0–8), plus the shared `start` (carries `rounds`) and `ping`.
+
 ### REST API
 
 | Method | Path | Purpose |
@@ -150,3 +181,20 @@ Client → server: `phrase` (setter), `vote` (`key` is a letter or a guess key l
 - A wrong letter *or* a wrong phrase guess costs a limb. 6 misses and the group is hanged.
 - Co-op: the setter scores nothing. Results show rounds solved plus each player's winning votes and solves.
 - Phrases are 3–48 chars, A–Z/0–9/space/apostrophe/hyphen. Digits show from the start; only letters are guessable.
+
+## Sharks & Minnows rules (all tunable in `public/games/sharks/shared/physics.js`)
+
+- 2–16 players. One starting shark per 6 players, minimum one, picked at random.
+- 20 s a crossing, after a 3 s countdown. Reach the far painted wall to score a point and sit the rest of the crossing out safely.
+- Tagged → you turn shark on the spot and score a point per tag of your own. Still in the water at the whistle and the sharks get you too.
+- Sharks can never enter the far wall, and can't enter the starting wall for the first 3 s. After that the whole floor is live.
+- Minnows run 7% faster; sharks get the longer dash (650 vs 520) on a slower cooldown (1.1 s vs 0.75 s). A ground dash hops slightly, an air dash is flat so it can't double as a second jump.
+- A shark can only take one minnow every 0.4 s.
+- Last minnow against two or more sharks wins and takes a 3-point bonus. Hard cap of 12 crossings.
+
+## Tic Tac Toe rules (all tunable in `public/games/tictactoe/shared/rules.js`)
+
+- Exactly 2 players. Host picks 3 or 5 rounds.
+- 20 s a move; run the clock out and a random empty square is played for you and counted against you.
+- X moves first; the X seat swaps every round.
+- Most rounds won takes the match. Draws count for neither player and an even series has no tiebreak.
